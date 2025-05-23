@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  redis:
+    image: redis:7.2
+    container_name: redis
+    networks:
+      custom_net:
+        ipv4_address: 172.28.1.2
+
+  python-service:
+    build: ./python-service
+    container_name: python-service
+    networks:
+      custom_net:
+        ipv4_address: 172.28.1.3
+    ports:
+      - "1723:1723"
+
+  nginx:
+    image: openresty/openresty:1.25.3.1-0-alpine
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./nginx/lua:/etc/nginx/lua:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - python-service
+    networks:
+      custom_net:
+        ipv4_address: 172.28.1.4
+
+networks:
+  custom_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
